@@ -7,6 +7,8 @@
 #include <memory.h>
 #include <iostream>
 #include <sched.h>
+#include <atomic>
+#include <malloc.h>
 
 namespace pe
 {
@@ -18,7 +20,10 @@ const std::string EventNames[] =
     "br.instrs",
     "cch.ll.rmiss",
     "cch.ll.wmiss",
-    "br.misses"
+    "br.misses",
+    "malloc",
+    "malloc.sz",
+    "free"
 };
     
 const uint32_t EventNativeType[] =
@@ -47,17 +52,22 @@ const uint64_t EventNativeConfig[] =
     PERF_COUNT_HW_BRANCH_MISSES
 };
 
+thread_local uint64_t mallocCount = 0;
+thread_local uint64_t mallocSize  = 0;
+thread_local uint64_t freeCount   = 0;
+
 Measurement::Measurement():
-    _maxCaptures { 0 },
-    _captureCount{ 0 },
-    _captureSize { 0 },
-    _captures    {},
-    _firstCapture{ nullptr },
-    _selfCost    { nullptr },
-    _nopeCost    { nullptr },
-    _eventCount  { 0 },
-    _fds         {},
-    _events      {}
+    _maxCaptures  { 0 },
+    _captureCount { 0 },
+    _captureSize  { 0 },
+    _captures     {},
+    _firstCapture { nullptr },
+    _selfCost     { nullptr },
+    _nopeCost     { nullptr },
+    _eventCount   { 0 },
+    _fds          {},
+    _events       {},
+    _captureMemory{ false }
 {
 }
 
@@ -120,8 +130,15 @@ void Measurement::processCaptures( const uint64_t * cost )
     }
 }
 
+// todo: check duplicates
 bool Measurement::addEvent( EventType evType )
 {
+    if( evType == EventType::memory )
+    {
+        _captureMemory = true;
+        return true;
+    }
+    
     if( evType >= EventType::count )
     {
         std::cerr << "too high event type " << (unsigned)evType << std::endl;
@@ -145,20 +162,75 @@ bool Measurement::addEvent( EventType evType )
         return false;
     }
     _fds.push_back( fd );
-    _events.push_back( evType );
-    _eventCount = _events.size();
-    _captureSize = sizeof(uint64_t) * ( 1 + _eventCount );
+    _events.push_back( (unsigned)evType );
     return true;
+}
+
+std::atomic<bool> memoryHooksActivated = false;
+void *(*old_malloc_hook)(size_t, const void *) = nullptr;
+void (*old_free_hook)(void *, const void *) = nullptr;
+
+void * my_malloc_hook( size_t size, const void *caller )
+{
+    ++mallocCount;
+    mallocSize += size;
+    __malloc_hook = old_malloc_hook;
+    void *result = malloc( size );
+    __malloc_hook = my_malloc_hook;
+    return result;
+}
+
+void my_free_hook( void *ptr, const void *caller )
+{
+    ++freeCount;
+    __free_hook = old_free_hook;
+    free( ptr );
+    __free_hook = my_free_hook;
 }
 
 bool Measurement::initialize( unsigned maxCaptures )
 {
+    if( maxCaptures < 1 )
+    {
+        std::cerr << "Zero capture count ?" << std::endl;
+        return false;
+    }
+
+    if( _maxCaptures )
+    {
+        std::cerr << "Multiples calls of Measurement::initialize() ?" << std::endl;
+        return false;
+    }
+
+    _maxCaptures = maxCaptures;
+
+
+    if( _captureMemory )
+    {
+        _events.push_back( (unsigned)EventType::count   );
+        _events.push_back( (unsigned)EventType::count+1 );
+        _events.push_back( (unsigned)EventType::count+2 );
+        
+        bool notTrue = false;
+        if( std::atomic_compare_exchange_strong( &memoryHooksActivated, &notTrue, true ) )
+        {
+            old_malloc_hook = __malloc_hook;
+            old_free_hook = __free_hook;
+            __malloc_hook = my_malloc_hook;
+            __free_hook = my_free_hook;
+        }
+    }
+    
+    _eventCount = _events.size();
     if( _eventCount == 0 )
     {
         std::cerr << "You probably forgot to add events or to 'sudo sysctl -w kernel.perf_event_paranoid=1'" << std::endl;
         return false;
     }
-    _maxCaptures = maxCaptures;
+
+    // used by read
+    _captureSize = sizeof(uint64_t) * ( 1 + _events.size() );
+    
     _captures.assign( 1 + ( _maxCaptures + 1 ) * 2 * _eventCount + _eventCount, 0 );
     _firstCapture = (&_captures[0]) + 1 + ( _maxCaptures - 1 ) * 2 * _eventCount;
     _avgValues    = capture(0,in) + _eventCount;
@@ -220,7 +292,18 @@ void Measurement::startCapture()
     {
         return;
     }
-    read( _fds[0], capture(_captureCount,in)-1, _captureSize );
+    uint64_t * ptr = capture(_captureCount,in);
+    if( _fds.size() )
+    {
+        read( _fds[0], ptr-1, _captureSize );
+    }
+    if( _captureMemory )
+    {
+        ptr += _eventCount - 3;
+        ptr[0] = mallocCount;
+        ptr[1] = mallocSize;
+        ptr[2] = freeCount;
+    }
 }
 
 void Measurement::stopCapture()
@@ -229,7 +312,18 @@ void Measurement::stopCapture()
     {
         return;
     }
-    read( _fds[0], capture(_captureCount,out)-1, _captureSize );
+    uint64_t * ptr = capture(_captureCount,out);
+    if( _fds.size() )
+    {
+        read( _fds[0], ptr-1, _captureSize );
+    }
+    if( _captureMemory )
+    {
+        ptr += _eventCount - 3;
+        ptr[0] = mallocCount;
+        ptr[1] = mallocSize;
+        ptr[2] = freeCount;
+    }
     ++_captureCount;
 }
 
@@ -239,7 +333,19 @@ void Measurement::fakeStopCapture()
     {
         return;
     }
-    read( _fds[0], capture(_captureCount,out)-1, _captureSize );
+    uint64_t * ptr = capture(_captureCount,out);
+    if( _fds.size() )
+    {
+        read( _fds[0], ptr-1, _captureSize );
+    }
+    if( _captureMemory )
+    {
+        ptr += _eventCount - 3;
+        ptr[0] = mallocCount;
+        ptr[1] = mallocSize;
+        ptr[2] = freeCount;
+    }
+    // the diff with stopCapture()
     // ++_captureCount;
 }
 

@@ -18,7 +18,8 @@ enum class EventType: unsigned
     llCacheReadMisses,
     llCacheWriteMisses,
     branchMisses,
-    count
+    count,
+    memory
 };
 
 class Measurement
@@ -84,7 +85,8 @@ class Measurement
         uint64_t             * _avgValues;    // 
         uint64_t               _eventCount;
         std::vector<int>       _fds;
-        std::vector<EventType> _events;
+        std::vector<unsigned>  _events;
+        bool                   _captureMemory;
 };
 
 }

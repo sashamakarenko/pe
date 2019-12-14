@@ -15,6 +15,7 @@ int main( int argc, char** argv )
     m.addEvent( pe::EventType::branchInstructions );
     m.addEvent( pe::EventType::llCacheReadMisses );
     m.addEvent( pe::EventType::branchMisses );
+    m.addEvent( pe::EventType::memory );
     m.initialize( 20 );
     
     m.showNopeCost( std::cout );
