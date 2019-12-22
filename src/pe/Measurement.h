@@ -78,7 +78,7 @@ class Measurement
         unsigned               _maxCaptures;
         unsigned               _captureCount;
         size_t                 _captureSize;
-        std::vector<uint64_t>  _captures;
+        std::vector<uint64_t>  _captures;     // see layout description in Measurement.cpp
         uint64_t             * _firstCapture; //
         uint64_t             * _selfCost;     //
         uint64_t             * _nopeCost;     //

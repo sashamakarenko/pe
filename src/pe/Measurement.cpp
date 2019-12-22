@@ -56,6 +56,27 @@ thread_local uint64_t mallocCount = 0;
 thread_local uint64_t mallocSize  = 0;
 thread_local uint64_t freeCount   = 0;
 
+
+/*
+ 
+ _captures[] : values are saved from back to front because read() will always override the first value
+ 
+ * 
+   capture(2,in)   capture(1,out)    capture(1,in)   capture(0,out)    _firstCapture     _avgValues        _selfCost        _nopeCost
+  ... ___________|________________|________________|________________|________________|________________|________________|________________|
+    
+    stopCapture()   startCapture()
+ 
+ Capture values:
+ 
+   nrd   ev1   ev2   ...   mal   msz   fre
+ |_____|_____|_____|_____|_____|_____|_____|
+   u64                   |if memory ev used| 
+ 
+ nrd is returned by read()
+ 
+*/
+
 Measurement::Measurement():
     _maxCaptures  { 0 },
     _captureCount { 0 },
@@ -64,6 +85,7 @@ Measurement::Measurement():
     _firstCapture { nullptr },
     _selfCost     { nullptr },
     _nopeCost     { nullptr },
+    _avgValues    { nullptr },
     _eventCount   { 0 },
     _fds          {},
     _events       {},
@@ -170,22 +192,22 @@ std::atomic<bool> memoryHooksActivated = false;
 void *(*old_malloc_hook)(size_t, const void *) = nullptr;
 void (*old_free_hook)(void *, const void *) = nullptr;
 
-void * my_malloc_hook( size_t size, const void *caller )
+void * myMallocHook( size_t size, const void *caller )
 {
     ++mallocCount;
     mallocSize += size;
     __malloc_hook = old_malloc_hook;
     void *result = malloc( size );
-    __malloc_hook = my_malloc_hook;
+    __malloc_hook = myMallocHook;
     return result;
 }
 
-void my_free_hook( void *ptr, const void *caller )
+void myFreeHook( void *ptr, const void *caller )
 {
     ++freeCount;
     __free_hook = old_free_hook;
     free( ptr );
-    __free_hook = my_free_hook;
+    __free_hook = myFreeHook;
 }
 
 bool Measurement::initialize( unsigned maxCaptures )
@@ -216,8 +238,8 @@ bool Measurement::initialize( unsigned maxCaptures )
         {
             old_malloc_hook = __malloc_hook;
             old_free_hook = __free_hook;
-            __malloc_hook = my_malloc_hook;
-            __free_hook = my_free_hook;
+            __malloc_hook = myMallocHook;
+            __free_hook = myFreeHook;
         }
     }
     
@@ -245,7 +267,7 @@ bool Measurement::initialize( unsigned maxCaptures )
     
     unsigned count = 100 < _maxCaptures ? 100 : _maxCaptures;
     
-    for( int i = 0; i < count; ++i )
+    for( unsigned i = 0; i < count; ++i )
     {
         startCapture();
         stopCapture();
@@ -254,7 +276,7 @@ bool Measurement::initialize( unsigned maxCaptures )
     computeAverage( _nopeCost, nullptr, 2 );
     _captureCount = 0;
 
-    for( int i = 0; i < count; ++i )
+    for( unsigned i = 0; i < count; ++i )
     {
         startCapture();
         fakeStopCapture();
@@ -327,6 +349,7 @@ void Measurement::stopCapture()
     ++_captureCount;
 }
 
+// used for benchmarking only
 void Measurement::fakeStopCapture()
 {
     if( _eventCount == 0 || _captureCount >= _maxCaptures )
