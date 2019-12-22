@@ -16,8 +16,8 @@ int main( int argc, char** argv )
     m.addEvent( pe::EventType::llCacheReadMisses );
     m.addEvent( pe::EventType::branchMisses );
     m.addEvent( pe::EventType::busCycles );
-    //m.addEvent( pe::EventType::stalledCyclesBackend );
-    //m.addEvent( pe::EventType::stalledCyclesFrontend );
+    m.addEvent( pe::EventType::l1dCacheReadMisses );
+    m.addEvent( pe::EventType::l1iCacheReadMisses );
     m.initialize( 20 );
     
     m.showNopeCost( std::cout );
