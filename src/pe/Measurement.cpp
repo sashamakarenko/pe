@@ -13,6 +13,7 @@
 namespace pe
 {
 
+// same order as EventType
 const std::string EventNames[] =
 {
     "hw.instrs",
@@ -21,6 +22,9 @@ const std::string EventNames[] =
     "cch.ll.rmiss",
     "cch.ll.wmiss",
     "br.misses",
+    "bus.cycles",
+    "stall.fr",
+    "stall.bk",
     "malloc",
     "malloc.sz",
     "free"
@@ -33,6 +37,9 @@ const uint32_t EventNativeType[] =
     PERF_TYPE_HARDWARE,
     PERF_TYPE_HW_CACHE,
     PERF_TYPE_HW_CACHE,
+    PERF_TYPE_HARDWARE,
+    PERF_TYPE_HARDWARE,
+    PERF_TYPE_HARDWARE,
     PERF_TYPE_HARDWARE
 };
 
@@ -42,6 +49,7 @@ const uint32_t EventNativeType[] =
 #define CACHEMISS_R ( ( PERF_COUNT_HW_CACHE_OP_READ  << 8 ) | ( PERF_COUNT_HW_CACHE_RESULT_MISS << 16 ) ) 
 #define CACHEMISS_W ( ( PERF_COUNT_HW_CACHE_OP_WRITE << 8 ) | ( PERF_COUNT_HW_CACHE_RESULT_MISS << 16 ) ) 
 
+// same order as EventType
 const uint64_t EventNativeConfig[] =
 {
     PERF_COUNT_HW_INSTRUCTIONS,
@@ -49,7 +57,10 @@ const uint64_t EventNativeConfig[] =
     PERF_COUNT_HW_BRANCH_INSTRUCTIONS,
     PERF_COUNT_HW_CACHE_LL | CACHEMISS_R,
     PERF_COUNT_HW_CACHE_LL | CACHEMISS_W,
-    PERF_COUNT_HW_BRANCH_MISSES
+    PERF_COUNT_HW_BRANCH_MISSES,
+    PERF_COUNT_HW_BUS_CYCLES,
+    PERF_COUNT_HW_STALLED_CYCLES_FRONTEND,
+    PERF_COUNT_HW_STALLED_CYCLES_BACKEND
 };
 
 thread_local uint64_t mallocCount = 0;

@@ -18,6 +18,9 @@ enum class EventType: unsigned
     llCacheReadMisses,
     llCacheWriteMisses,
     branchMisses,
+    busCycles,
+    stalledCyclesFrontend,
+    stalledCyclesBackend,
     count,
     memory
 };
