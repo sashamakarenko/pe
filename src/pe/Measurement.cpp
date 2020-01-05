@@ -436,10 +436,19 @@ void Measurement::printCaptures() const
         printf( "%16s", EventNames[ (int)_events[i] ].c_str() );
     }
     printf( "\n" );
-    for( unsigned i = 0; i < _captureCount; ++i )
+    for( unsigned i = 0; i <= _captureCount; ++i )
     {
-        printf( "%6d ", i+1 );
-        const uint64_t * values = capture(i,in);
+        const uint64_t * values;
+        if( i < _captureCount )
+        {
+            printf( "%6d ", i+1 );
+            values = capture(i,in);
+        }
+        else
+        {
+            printf( "   avg:" );
+            values = _avgValues;
+        }
         for( unsigned j = 0 ; j < _eventCount; ++j )
         {
             printf( "%16ld", values[j] );
