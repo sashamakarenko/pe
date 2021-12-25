@@ -17,17 +17,21 @@ constexpr bool isNotDecDigit( char c )
     return c < '0';
 }
 
-constexpr static const unsigned uintPow10[] =
+constexpr static const uint64_t uintPow10[] =
 {
     1U,
     10U,
     100U,
     1000U,
-    10000U,
-    100000U,
-    1000000U,
-    10000000U,
-    100000000U
+    1000'0U,
+    1000'00U,
+    1000'000U,
+    1000'000'0U,
+    1000'000'00U,
+    1000'000'000U,
+    1000'000'000'0U,
+    1000'000'000'00U,
+    1000'000'000'000U,
 };
 
 constexpr static const double div10Pow[] =
@@ -184,7 +188,7 @@ inline T parseUInt8( const char * ptr, unsigned & len )
     unsigned tmplen = 0;
     T next = parseUInt8<T>( ptr + 8, tmplen );
     len += tmplen + 8;
-    return tmp * uintPow10[ tmplen ] + next;
+    return tmp * (T)uintPow10[ tmplen ] + next;
 }
 
 inline double parseDouble( const char * ptr )
