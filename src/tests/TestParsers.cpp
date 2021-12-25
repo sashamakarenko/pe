@@ -1,6 +1,7 @@
 #include <pe/Measurement.h>
 #include <iostream>
 #include "TemplateParser.h"
+#include "Helper.h"
 
 extern int intValue;
 extern double doubleValue;
@@ -11,20 +12,59 @@ extern int spinUpCpu();
 
 int main( int argc, char** argv )
 {
+
+    for( const char **ptr = smallIntegers; *ptr; ++ptr )
+    {
+        unsigned v0 = (unsigned)atoi( *ptr );
+        unsigned len = 0;
+        unsigned v2 = parseUInt2( *ptr, len );
+        CHECK( parseUInt2, v0, == v2 )
+
+        len = 0;
+        unsigned v8 = parseUInt8( *ptr, len );
+        CHECK( parseUInt8, v0, == v8 )
+
+        len = 0;
+        unsigned vn1 = naiveParseUInt1( *ptr, len );
+        CHECK( naiveParseUInt1, v0, == vn1 )
+
+        len = 0;
+        unsigned vn2 = naiveParseUInt2( *ptr, len );
+        CHECK( naiveParseUInt2, vn2, == v0 )
+    }
+    for( const char **ptr = largeIntegers; *ptr; ++ptr )
+    {
+        unsigned v0 = (unsigned)atoi( *ptr );
+        unsigned len = 0;
+        unsigned v2 = parseUInt2( *ptr, len );
+        CHECK( parseUInt2, v0, == v2 )
+
+        len = 0;
+        unsigned v8 = parseUInt8( *ptr, len );
+        CHECK( parseUInt8, v0, == v8 )
+
+        len = 0;
+        unsigned vn1 = naiveParseUInt1( *ptr, len );
+        CHECK( naiveParseUInt1, v0, == vn1 )
+
+        len = 0;
+        unsigned vn2 = naiveParseUInt2( *ptr, len );
+        CHECK( naiveParseUInt2, vn2, == v0 )
+    }
     pe::Measurement m;
     m.pinToCpuCore( 3 );
     m.addEvent( pe::EventType::cpuCycles );
     m.addEvent( pe::EventType::hwInstructions );
-    m.addEvent( pe::EventType::l1dCacheReadMisses );
-    m.addEvent( pe::EventType::l1dCacheWriteMisses );
-    m.addEvent( pe::EventType::l1iCacheReadMisses );
-    m.addEvent( pe::EventType::l1iCacheWriteMisses );
+    //m.addEvent( pe::EventType::l1dCacheReadMisses );
+    //m.addEvent( pe::EventType::l1dCacheWriteMisses );
+    //m.addEvent( pe::EventType::l1iCacheReadMisses );
+    //m.addEvent( pe::EventType::l1iCacheWriteMisses );
     m.addEvent( pe::EventType::branchInstructions );
-    m.addEvent( pe::EventType::llCacheReadMisses );
-    m.addEvent( pe::EventType::branchMisses );
+    //m.addEvent( pe::EventType::llCacheReadMisses );
+    //m.addEvent( pe::EventType::branchMisses );
     // m.addEvent( pe::EventType::memory );
     const unsigned N = 16;
-    m.initialize( 30 );
+    m.initialize( N*10 );
     
     std::cout << "\nsmall integers atoi:" << std::endl;
     for( int i = 0; i < m.getMaxCaptures(); ++i )
@@ -35,7 +75,7 @@ int main( int argc, char** argv )
         //std::cout << intValue << std::endl;
     }
     m.prepareResults();
-    m.printCaptures();
+    // m.printCaptures();
     m.showAverageValues( std::cout );
     m.rewind();
 
@@ -50,41 +90,55 @@ int main( int argc, char** argv )
         //std::cout << intValue << std::endl;
     }
     m.prepareResults();
-    m.printCaptures();
+    // m.printCaptures();
     m.showAverageValues( std::cout );
     m.rewind();
 
     unsigned len;
 
-    std::cout << "\nsmall integers naiveParseUint:" << std::endl;
+    std::cout << "\nsmall integers naiveParseUint1:" << std::endl;
     intValue = spinUpCpu();
     for( int i = 0; i < m.getMaxCaptures(); ++i )
     {
         m.startCapture();
-        intValue = naiveParseUInt( smallIntegers[i%N], len );
+        intValue = naiveParseUInt1( smallIntegers[i%N], len );
         m.stopCapture();
         //std::cout << intValue << std::endl;
     }
     m.prepareResults();
-    m.printCaptures();
+    // m.printCaptures();
     m.showAverageValues( std::cout );
     m.rewind();
 
-    std::cout << "\nsmall integers parseUint:" << std::endl;
+    std::cout << "\nsmall integers parseUint8:" << std::endl;
     intValue = spinUpCpu();
     for( int i = 0; i < m.getMaxCaptures(); ++i )
     {
         m.startCapture();
-        intValue = parseUInt( smallIntegers[i%N], len );
+        intValue = parseUInt8( smallIntegers[i%N], len );
         m.stopCapture();
         //std::cout << intValue << std::endl;
     }
     m.prepareResults();
-    m.printCaptures();
+    // m.printCaptures();
     m.showAverageValues( std::cout );
     m.rewind();
 
+    std::cout << "\nsmall integers parseUint2:" << std::endl;
+    intValue = spinUpCpu();
+    for( int i = 0; i < m.getMaxCaptures(); ++i )
+    {
+        m.startCapture();
+        intValue = parseUInt2( smallIntegers[i%N], len );
+        m.stopCapture();
+        //std::cout << intValue << std::endl;
+    }
+    m.prepareResults();
+    // m.printCaptures();
+    m.showAverageValues( std::cout );
+    m.rewind();
 
+/*
     std::cout << "\nhuge integers naiveParseUint:" << std::endl;
     intValue = spinUpCpu();
     for( int i = 0; i < m.getMaxCaptures(); ++i )
@@ -95,7 +149,7 @@ int main( int argc, char** argv )
         //std::cout << intValue << std::endl;
     }
     m.prepareResults();
-    m.printCaptures();
+    // m.printCaptures();
     m.showAverageValues( std::cout );
     m.rewind();
 
@@ -109,40 +163,70 @@ int main( int argc, char** argv )
         //std::cout << intValue << std::endl;
     }
     m.prepareResults();
-    m.printCaptures();
+    // m.printCaptures();
     m.showAverageValues( std::cout );
     m.rewind();
+*/
 
 
-
-    std::cout << "\nlarge integers naiveParseUint:" << std::endl;
+    std::cout << "\nlarge integers naiveParseUint1:" << std::endl;
     intValue = spinUpCpu();
     for( int i = 0; i < m.getMaxCaptures(); ++i )
     {
         m.startCapture();
-        intValue = naiveParseUInt( largeIntegers[i%N], len );
+        intValue = naiveParseUInt1( largeIntegers[i%N], len );
         m.stopCapture();
         //std::cout << intValue << std::endl;
     }
     m.prepareResults();
-    m.printCaptures();
+    // m.printCaptures();
     m.showAverageValues( std::cout );
     m.rewind();
 
-    std::cout << "\nlarge integers parseUint:" << std::endl;
+    std::cout << "\nlarge integers naiveParseUint2:" << std::endl;
     intValue = spinUpCpu();
     for( int i = 0; i < m.getMaxCaptures(); ++i )
     {
         m.startCapture();
-        intValue = parseUInt( largeIntegers[i%N], len );
+        intValue = naiveParseUInt2( largeIntegers[i%N], len );
         m.stopCapture();
         //std::cout << intValue << std::endl;
     }
     m.prepareResults();
-    m.printCaptures();
+    // m.printCaptures();
+    m.showAverageValues( std::cout );
+    m.rewind();
+
+    std::cout << "\nlarge integers parseUint8:" << std::endl;
+    intValue = spinUpCpu();
+    for( int i = 0; i < m.getMaxCaptures(); ++i )
+    {
+        m.startCapture();
+        intValue = parseUInt8( largeIntegers[i%N], len );
+        m.stopCapture();
+        //std::cout << intValue << std::endl;
+    }
+    m.prepareResults();
+    // m.printCaptures();
+    m.showAverageValues( std::cout );
+    m.rewind();
+
+
+    std::cout << "\nlarge integers parseUint2:" << std::endl;
+    intValue = spinUpCpu();
+    for( int i = 0; i < m.getMaxCaptures(); ++i )
+    {
+        m.startCapture();
+        intValue = parseUInt2( largeIntegers[i%N], len );
+        m.stopCapture();
+        //std::cout << intValue << std::endl;
+    }
+    m.prepareResults();
+    // m.printCaptures();
     m.showAverageValues( std::cout );
     m.rewind();
     
+
     return 0;
 }
 

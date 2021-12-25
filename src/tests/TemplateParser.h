@@ -46,102 +46,69 @@ constexpr static const double div10Pow[] =
     0.00000000001
 };
 
-inline unsigned parseUIntOld( const char * ptr, unsigned & len )
+template< typename T = unsigned >
+inline T parseUInt2( const char * ptr, unsigned & len )
 {
-    if( isNotDecDigit( ptr[0] ) )
+    using UC = unsigned char;
+    T res = 0;
+    UC dif1 = UC(*ptr++) - UC('0');
+    if( dif1 <= UC(9) )
     {
-        return 0;
+        res += T(dif1);
+        UC dif2 = UC(*ptr++) - UC('0');
+        if( dif2 <= UC(9) )
+        {
+            res = res * 10 + T(dif2);
+            dif1 = UC(*ptr++) - UC('0');
+            if( dif1 <= UC(9) )
+            {
+                res = res * 10 + T(dif1);
+                dif2 = UC(*ptr++) - UC('0');
+                if( dif2 <= UC(9) )
+                {
+                    res = res * 10 + T(dif2);
+                    dif1 = UC(*ptr++) - UC('0');
+                    if( dif1 <= UC(9) )
+                    {
+                        res = res * 10 + T(dif1);
+                        dif2 = UC(*ptr++) - UC('0');
+                        if( dif2 <= UC(9) )
+                        {
+                            res = res * 10 + T(dif2);
+                            dif1 = UC(*ptr++) - UC('0');
+                            if( dif1 <= UC(9) )
+                            {
+                                res = res * 10 + T(dif1);
+                                dif2 = UC(*ptr++) - UC('0');
+                                if( dif2 <= UC(9) )
+                                {
+                                    res = res * 10 + T(dif2);
+                                    dif1 = UC(*ptr++) - UC('0');
+                                    if( dif1 <= UC(9) )
+                                    {
+                                        res = res * 10 + T(dif1);
+                                    }
+                                    ++len;
+                                }
+                                ++len;
+                            }
+                            ++len;
+                        }
+                        ++len;
+                    }
+                    ++len;
+                }
+                ++len;
+            }
+            ++len;
+        }
+        ++len;
     }
-    if( isNotDecDigit( ptr[1] ) )
-    {
-        len += 1;
-        return unsigned( ptr[0] ) - dec_zeros<1>();
-    }
-    if( isNotDecDigit( ptr[2] ) )
-    {
-        len += 2;
-        return unsigned( ptr[0] ) * 10 + unsigned( ptr[1] ) - dec_zeros<2>();
-    }
-    if( isNotDecDigit( ptr[3] ) )
-    {
-        len += 3;
-        return unsigned( ptr[0] ) * 100 + unsigned( ptr[1] ) * 10 + unsigned( ptr[2] ) - dec_zeros<3>();
-    }
-    if( isNotDecDigit( ptr[4] ) )
-    {
-        len += 4;
-        return unsigned( ptr[0] ) * 1000 + 
-               unsigned( ptr[1] ) * 100 + 
-               unsigned( ptr[2] ) * 10 + 
-               unsigned( ptr[3] ) - dec_zeros<4>();
-    }
-    if( isNotDecDigit( ptr[5] ) )
-    {
-        len += 5;
-        return unsigned( ptr[0] ) * 10000 + 
-               unsigned( ptr[1] ) * 1000 + 
-               unsigned( ptr[2] ) * 100 + 
-               unsigned( ptr[3] ) * 10 + 
-               unsigned( ptr[4] ) - dec_zeros<5>();
-    }
-    if( isNotDecDigit( ptr[6] ) )
-    {
-        len += 6;
-        return unsigned( ptr[0] ) * 100000 + 
-               unsigned( ptr[1] ) * 10000 + 
-               unsigned( ptr[2] ) * 1000 + 
-               unsigned( ptr[3] ) * 100 + 
-               unsigned( ptr[4] ) * 10 + 
-               unsigned( ptr[5] ) - dec_zeros<6>();
-    }
-    if( isNotDecDigit( ptr[7] ) )
-    {
-        len += 7;
-        return unsigned( ptr[0] ) * 1000000 + 
-               unsigned( ptr[1] ) * 100000 + 
-               unsigned( ptr[2] ) * 10000 + 
-               unsigned( ptr[3] ) * 1000 + 
-               unsigned( ptr[4] ) * 100 + 
-               unsigned( ptr[5] ) * 10 +
-               unsigned( ptr[6] ) - dec_zeros<7>();
-    }
-    if( isNotDecDigit( ptr[8] ) )
-    {
-        len += 8;
-        return unsigned( ptr[0] ) * 10000000 + 
-               unsigned( ptr[1] ) * 1000000 + 
-               unsigned( ptr[2] ) * 100000 + 
-               unsigned( ptr[3] ) * 10000 + 
-               unsigned( ptr[4] ) * 1000 + 
-               unsigned( ptr[5] ) * 100 +
-               unsigned( ptr[6] ) * 10 +
-               unsigned( ptr[7] ) - dec_zeros<8>();
-    }
-    
-    unsigned tmp = 
-               unsigned( ptr[0] ) * 100000000 + 
-               unsigned( ptr[1] ) * 10000000 + 
-               unsigned( ptr[2] ) * 1000000 + 
-               unsigned( ptr[3] ) * 100000 + 
-               unsigned( ptr[4] ) * 10000 + 
-               unsigned( ptr[5] ) * 1000 +
-               unsigned( ptr[6] ) * 100 +
-               unsigned( ptr[7] ) * 10 +
-               unsigned( ptr[8] ) - dec_zeros<9>();
-    if( isNotDecDigit( ptr[9] ) )
-    {
-        len += 9;
-        return tmp;
-    }
-
-    unsigned tmplen = 0;
-    unsigned next = parseUIntOld( ptr + 9, tmplen );
-    len += tmplen + 9;
-    return tmp * uintPow10[ tmplen ] + next;
+    return res;
 }
 
 template< typename T = unsigned >
-inline T parseUInt( const char * ptr, unsigned & len )
+inline T parseUInt8( const char * ptr, unsigned & len )
 {
     if( isNotDecDigit( ptr[0] ) )
     {
@@ -200,10 +167,7 @@ inline T parseUInt( const char * ptr, unsigned & len )
                T( ptr[5] ) * 10 +
                T( ptr[6] ) - dec_zeros<7>();
     }
-    if( isNotDecDigit( ptr[8] ) )
-    {
-        len += 8;
-        return T( ptr[0] ) * 10000000 + 
+    T tmp =    T( ptr[0] ) * 10000000 + 
                T( ptr[1] ) * 1000000 + 
                T( ptr[2] ) * 100000 + 
                T( ptr[3] ) * 10000 + 
@@ -211,45 +175,34 @@ inline T parseUInt( const char * ptr, unsigned & len )
                T( ptr[5] ) * 100 +
                T( ptr[6] ) * 10 +
                T( ptr[7] ) - dec_zeros<8>();
-    }
-    
-    T tmp =    T( ptr[0] ) * 100000000 + 
-               T( ptr[1] ) * 10000000 + 
-               T( ptr[2] ) * 1000000 + 
-               T( ptr[3] ) * 100000 + 
-               T( ptr[4] ) * 10000 + 
-               T( ptr[5] ) * 1000 +
-               T( ptr[6] ) * 100 +
-               T( ptr[7] ) * 10 +
-               T( ptr[8] ) - dec_zeros<9>();
-    if( isNotDecDigit( ptr[9] ) )
+    if( isNotDecDigit( ptr[8] ) )
     {
-        len += 9;
+        len += 8;
         return tmp;
     }
 
     unsigned tmplen = 0;
-    T next = parseUInt<T>( ptr + 9, tmplen );
-    len += tmplen + 9;
+    T next = parseUInt8<T>( ptr + 8, tmplen );
+    len += tmplen + 8;
     return tmp * uintPow10[ tmplen ] + next;
 }
 
 inline double parseDouble( const char * ptr )
 {
     unsigned intlen = 0;
-    unsigned integer = parseUInt( ptr, intlen );
+    unsigned integer = parseUInt2( ptr, intlen );
     double mantissa = 0.0;
     if( ptr[intlen] == '.' )
     {
         unsigned mantissaLength = 0;
-        mantissa = parseUInt( ptr + intlen + 1, mantissaLength );
+        mantissa = parseUInt2( ptr + intlen + 1, mantissaLength );
         mantissa *= div10Pow[ mantissaLength ];
     }
     return (double)integer + mantissa;
 }
 
 template< typename T = unsigned >
-inline T naiveParseUInt( const char * p, unsigned & len )
+inline T naiveParseUInt1( const char * p, unsigned & len )
 {
     T x = 0;
     while ( *p >= '0' )
@@ -257,6 +210,31 @@ inline T naiveParseUInt( const char * p, unsigned & len )
         x = x*10 + T(*p - '0');
         ++p;
         ++len;
+    }
+    return x;
+}
+
+template< typename T = unsigned >
+inline T naiveParseUInt2( const char * p, unsigned & len )
+{
+    using UC = unsigned char;
+    T x = 0;
+    UC dif1 = UC(*p++) - UC('0');
+    while( dif1 < UC(10) )
+    {
+        x = x * 10 + T(dif1);
+        UC dif2 = UC(*p++) - UC('0');
+        ++len;
+        if( dif2 < UC(10) )
+        {
+            x = x * 10 + T(dif2);
+            dif1 = UC(*p++) - UC('0');
+            ++len;
+        }
+        else
+        {
+            break;
+        }
     }
     return x;
 }
