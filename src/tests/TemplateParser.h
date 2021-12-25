@@ -32,6 +32,9 @@ constexpr static const uint64_t uintPow10[] =
     1000'000'000'0U,
     1000'000'000'00U,
     1000'000'000'000U,
+    1000'000'000'000'0U,
+    1000'000'000'000'00U,
+    1000'000'000'000'000U,
 };
 
 constexpr static const double div10Pow[] =
@@ -188,6 +191,48 @@ inline T parseUInt8( const char * ptr, unsigned & len )
     unsigned tmplen = 0;
     T next = parseUInt8<T>( ptr + 8, tmplen );
     len += tmplen + 8;
+    return tmp * (T)uintPow10[ tmplen ] + next;
+}
+
+
+template< typename T = unsigned >
+inline T parseUInt4( const char * ptr, unsigned & len )
+{
+    uint32_t mem = *reinterpret_cast<const uint32_t*>(ptr);
+    if( isNotDecDigit( mem & 0xff ) )
+    {
+        return 0;
+    }
+    if( isNotDecDigit( ( mem >> 8 ) & 0xff ) )
+    {
+        len += 1;
+        return T( mem & 0xff ) - dec_zeros<1>();
+    }
+    if( isNotDecDigit( ( mem >> 16 ) & 0xff  ) )
+    {
+        len += 2;
+        return T( mem & 0xff ) * 10 + T( (mem>>8) & 0xff ) - dec_zeros<2>();
+    }
+    if( isNotDecDigit( ( mem >> 24 ) & 0xff  ) )
+    {
+        len += 3;
+        return T(  mem      & 0xff ) * 100 + 
+               T( (mem>>8 ) & 0xff ) * 10 + 
+               T( (mem>>16) & 0xff ) - dec_zeros<3>();
+    }
+    T tmp =    T( ptr[0] ) * 1000 + 
+               T( ptr[1] ) * 100 +
+               T( ptr[2] ) * 10 +
+               T( ptr[3] ) - dec_zeros<4>();
+    if( isNotDecDigit( ptr[4] ) )
+    {
+        len += 4;
+        return tmp;
+    }
+
+    unsigned tmplen = 0;
+    T next = parseUInt4<T>( ptr + 4, tmplen );
+    len += tmplen + 4;
     return tmp * (T)uintPow10[ tmplen ] + next;
 }
 

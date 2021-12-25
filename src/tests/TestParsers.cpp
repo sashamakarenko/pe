@@ -13,7 +13,7 @@ extern int spinUpCpu();
 int main( int argc, char** argv )
 {
     unsigned l = 0;
-    parseUInt8<long>( "0123456789" "1234567", l );
+    long v = parseUInt4<long>( "0123456789" "1234567", l );
 
     for( const char **ptr = smallIntegers; *ptr; ++ptr )
     {
@@ -25,6 +25,10 @@ int main( int argc, char** argv )
         len = 0;
         unsigned v8 = parseUInt8( *ptr, len );
         CHECK( parseUInt8, v0, == v8 )
+
+        len = 0;
+        unsigned v4 = parseUInt4( *ptr, len );
+        CHECK( parseUInt4, v0, == v4 )
 
         len = 0;
         unsigned vn1 = naiveParseUInt1( *ptr, len );
@@ -46,6 +50,10 @@ int main( int argc, char** argv )
         CHECK( parseUInt8, v0, == v8 )
 
         len = 0;
+        unsigned v4 = parseUInt4( *ptr, len );
+        CHECK( parseUInt4, v0, == v4 )
+
+        len = 0;
         unsigned vn1 = naiveParseUInt1( *ptr, len );
         CHECK( naiveParseUInt1, v0, == vn1 )
 
@@ -62,6 +70,10 @@ int main( int argc, char** argv )
 
         long v8 = parseUInt8<long>( *ptr, len );
         CHECK( parseUInt8, v8, == v0 )
+
+        len = 0;
+        long v4 = parseUInt4<long>( *ptr, len );
+        CHECK( parseUInt4, v4, == v0 )
 
         len = 0;
         long vn1 = naiveParseUInt1<long>( *ptr, len );
@@ -159,6 +171,20 @@ int main( int argc, char** argv )
     m.showAverageValues( std::cout );
     m.rewind();
 
+    std::cout << "\nsmall integers parseUint4:" << std::endl;
+    intValue = spinUpCpu();
+    for( int i = 0; i < m.getMaxCaptures(); ++i )
+    {
+        m.startCapture();
+        intValue = parseUInt4( smallIntegers[i%N], len );
+        m.stopCapture();
+        //std::cout << intValue << std::endl;
+    }
+    m.prepareResults();
+    // m.printCaptures();
+    m.showAverageValues( std::cout );
+    m.rewind();
+
 
     std::cout << "\nhuge integers naiveParseUint1:" << std::endl;
     intValue = spinUpCpu();
@@ -194,6 +220,20 @@ int main( int argc, char** argv )
     {
         m.startCapture();
         intValue = parseUInt8<uint64_t>( hugeIntegers[i%N], len );
+        m.stopCapture();
+        //std::cout << intValue << std::endl;
+    }
+    m.prepareResults();
+    // m.printCaptures();
+    m.showAverageValues( std::cout );
+    m.rewind();
+
+    std::cout << "\nhuge integers parseUint4:" << std::endl;
+    intValue = spinUpCpu();
+    for( int i = 0; i < m.getMaxCaptures(); ++i )
+    {
+        m.startCapture();
+        intValue = parseUInt4<uint64_t>( hugeIntegers[i%N], len );
         m.stopCapture();
         //std::cout << intValue << std::endl;
     }
@@ -260,6 +300,19 @@ int main( int argc, char** argv )
     m.showAverageValues( std::cout );
     m.rewind();
     
+    std::cout << "\nlarge integers parseUint4:" << std::endl;
+    intValue = spinUpCpu();
+    for( int i = 0; i < m.getMaxCaptures(); ++i )
+    {
+        m.startCapture();
+        intValue = parseUInt4( largeIntegers[i%N], len );
+        m.stopCapture();
+        //std::cout << intValue << std::endl;
+    }
+    m.prepareResults();
+    // m.printCaptures();
+    m.showAverageValues( std::cout );
+    m.rewind();
 
     return 0;
 }
