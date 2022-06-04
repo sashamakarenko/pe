@@ -94,3 +94,6 @@ $> sudo cpufreq-set -g powersave
 Hopefully the column names are self-explanatory.
 One can convert CPU cycles to time (if frequency is stable) by deviding number of cycles by CPU frequency.
 In my case a gettimeofday casts in average 77/5GHz = 15 nanos.
+
+[![HitCount](https://hits.dwyl.com/sashamakarenko/pe.svg?style=flat)](http://hits.dwyl.com/sashamakarenko/pe)
+
