@@ -1,7 +1,7 @@
 # pe - perf event wrapper
 linux perf event c++ wrapper
 
-Measure how much your code costs in terms of hardware instructions, cachemisses, branchemisses and memory allocations.
+Measure how much your code costs in terms of hardware instructions, cachemisses, branchmisses and memory allocations.
 
 ## 1. Compile pe ##
 
