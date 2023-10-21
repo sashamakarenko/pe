@@ -3,26 +3,35 @@
 
 #include <stdint.h>
 
-struct C
+struct Base
 {
-    virtual ~C();
-    
-    int getI() const volatile;
+    Base();
 
-    virtual int getIv() const volatile;
-    
-    inline int getIi() const volatile { return i; } 
-    
-    inline int getIx() const volatile { return *reinterpret_cast< const volatile int *>( reinterpret_cast< const volatile char *>( this ) + offsets[1] ); }
-    
+    virtual ~Base();
+
+    int getInt() const volatile;
+
+    virtual int getIntVirtual() const volatile;
+
+    inline int getIntInlined() const volatile { return i; }
+
+    inline int getIntInlinedIndirect() const volatile { return *reinterpret_cast< const volatile int *>( reinterpret_cast< const volatile char *>( this ) + offsets[1] ); }
+
     int i;
-    
+
+    int (Base::*getIntFunctionPtr)() const volatile;
+
     static const uint32_t * const offsets;
 };
 
-struct B: virtual C
+struct Derived: Base
 {
-    virtual int getIv() const volatile;
+    virtual int getIntVirtual() const volatile override;
+};
+
+struct VDerived: virtual Base
+{
+    virtual int getIntVirtual() const volatile override;
 };
 
 #endif /* LIBCALLS_H */

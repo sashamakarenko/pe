@@ -7,13 +7,25 @@ timeval tv;
 timespec ts;
 int vint;
 uint64_t vint64;
-C c;
-B b;
 
 
-const uint32_t  cOffsets[] = { 0, reinterpret_cast< const char *>( & c.i ) - reinterpret_cast< const char *>( & c ) };
+Base baseObj;
+Base & base = baseObj;
 
-const uint32_t * const C::offsets = cOffsets;
+Derived derivedObj;
+Base & derived = derivedObj;
+
+struct VDerivedComplex: virtual Base, VDerived
+{
+    virtual int getIntVirtual() const volatile override;
+};
+
+VDerivedComplex vderivedObj;
+Base & vderived = vderivedObj;
+
+const uint32_t  cOffsets[] = { 0, reinterpret_cast< const char *>( & base.i ) - reinterpret_cast< const char *>( & base ) };
+
+const uint32_t * const Base::offsets = cOffsets;
 
 
 void voidFunction()
@@ -21,20 +33,31 @@ void voidFunction()
 }
 
 
-void voidFunction1( int )
+void voidFunctionInt( int )
 {
 }
 
-int  intFunction1( int a )
+int intFunctionInt( int a )
 {
     return a;
 }
 
-C::~C(){}
-    
-int C::getI() const volatile { return i; };
+Base::Base()
+: i{0}
+, getIntFunctionPtr{ & Base::getInt }
+{
 
-int C::getIv() const volatile { return i; };
+}
 
-int B::getIv() const volatile { return i; };
+Base::~Base(){}
+
+int Base::getInt() const volatile { return i; };
+
+int Base::getIntVirtual() const volatile { return i; };
+
+int Derived::getIntVirtual() const volatile { return i; };
+
+int VDerived::getIntVirtual() const volatile { return i; };
+
+int VDerivedComplex::getIntVirtual() const volatile { return i; };
 

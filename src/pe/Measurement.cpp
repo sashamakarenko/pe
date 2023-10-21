@@ -1,5 +1,6 @@
 #include <pe/Measurement.h>
 #include <string>
+#include <algorithm>
 #include <linux/perf_event.h>
 #include <unistd.h>
 #include <sys/syscall.h>
@@ -33,7 +34,7 @@ const std::string EventNames[] =
     "malloc.sz",
     "free"
 };
-    
+
 const uint32_t EventNativeType[] =
 {
     PERF_TYPE_HARDWARE,
@@ -54,8 +55,8 @@ const uint32_t EventNativeType[] =
 // you will need:
 // sudo echo -1 > /proc/sys/kernel/perf_event_paranoid
 
-#define CACHEMISS_R ( ( PERF_COUNT_HW_CACHE_OP_READ  << 8 ) | ( PERF_COUNT_HW_CACHE_RESULT_MISS << 16 ) ) 
-#define CACHEMISS_W ( ( PERF_COUNT_HW_CACHE_OP_WRITE << 8 ) | ( PERF_COUNT_HW_CACHE_RESULT_MISS << 16 ) ) 
+#define CACHEMISS_R ( ( PERF_COUNT_HW_CACHE_OP_READ  << 8 ) | ( PERF_COUNT_HW_CACHE_RESULT_MISS << 16 ) )
+#define CACHEMISS_W ( ( PERF_COUNT_HW_CACHE_OP_WRITE << 8 ) | ( PERF_COUNT_HW_CACHE_RESULT_MISS << 16 ) )
 
 // same order as EventType
 const uint64_t EventNativeConfig[] =
@@ -81,23 +82,23 @@ thread_local uint64_t freeCount   = 0;
 
 
 /*
- 
+
  _captures[] : values are saved from back to front because read() will always override the first value
- 
- * 
+
+ *
    capture(2,in)   capture(1,out)    capture(1,in)   capture(0,out)    _firstCapture     _avgValues        _selfCost        _nopeCost
   ... ___________|________________|________________|________________|________________|________________|________________|________________|
-    
+
     stopCapture()   startCapture()
- 
+
  Capture values:
- 
+
    nrd   ev1   ev2   ...   mal   msz   fre
  |_____|_____|_____|_____|_____|_____|_____|
-   u64                   |if memory ev used| 
- 
+   u64                   |if memory ev used|
+
  nrd is returned by read()
- 
+
 */
 
 Measurement::Measurement():
@@ -150,12 +151,12 @@ void Measurement::computeAverage( uint64_t * result, const uint64_t * cost, unsi
     {
         return;
     }
-    
+
     for( unsigned i = noFirstCapturesToExclude; i < _captureCount; ++i )
     {
         capturesAdd( result, capture(i,in), result );
     }
-    
+
     uint64_t count = _captureCount - noFirstCapturesToExclude;
     for( unsigned j = 0; j < _eventCount; ++j )
     {
@@ -183,7 +184,7 @@ bool Measurement::addEvent( EventType evType )
         _captureMemory = true;
         return true;
     }
-    
+
     if( evType >= EventType::count )
     {
         std::cerr << "too high event type " << (unsigned)evType << std::endl;
@@ -198,7 +199,7 @@ bool Measurement::addEvent( EventType evType )
     pe.exclude_hv     = 1;
     pe.read_format    = PERF_FORMAT_GROUP;
     pe.disabled       = 1;
-    
+
     int groupFd = _fds.size() ? _fds[0] : -1;
     int fd = syscall( __NR_perf_event_open, &pe, 0, -1, groupFd, 0 );
     if( fd == -1 )
@@ -255,7 +256,7 @@ bool Measurement::initialize( unsigned maxCaptures )
         _events.push_back( (unsigned)EventType::count   );
         _events.push_back( (unsigned)EventType::count+1 );
         _events.push_back( (unsigned)EventType::count+2 );
-        
+
         bool notTrue = false;
         if( std::atomic_compare_exchange_strong( &memoryHooksActivated, &notTrue, true ) )
         {
@@ -265,7 +266,7 @@ bool Measurement::initialize( unsigned maxCaptures )
             __free_hook = myFreeHook;
         }
     }
-    
+
     _eventCount = _events.size();
     if( _eventCount == 0 )
     {
@@ -275,7 +276,7 @@ bool Measurement::initialize( unsigned maxCaptures )
 
     // used by read
     _captureSize = sizeof(uint64_t) * ( 1 + _events.size() );
-    
+
     _captures.assign( 1 + ( _maxCaptures + 1 ) * 2 * _eventCount + _eventCount, 0 );
     _firstCapture = (&_captures[0]) + 1 + ( _maxCaptures - 1 ) * 2 * _eventCount;
     _avgValues    = capture(0,in) + _eventCount;
@@ -287,9 +288,9 @@ bool Measurement::initialize( unsigned maxCaptures )
         ioctl( fd, PERF_EVENT_IOC_RESET , 0 );
         ioctl( fd, PERF_EVENT_IOC_ENABLE, 0 );
     }
-    
+
     unsigned count = 100 < _maxCaptures ? 100 : _maxCaptures;
-    
+
     for( unsigned i = 0; i < count; ++i )
     {
         startCapture();
@@ -309,7 +310,7 @@ bool Measurement::initialize( unsigned maxCaptures )
     processCaptures( _nopeCost );
     computeAverage( _selfCost, nullptr, 2 );
     _captureCount = 0;
-    
+
     return true;
 }
 
@@ -395,7 +396,7 @@ void Measurement::fakeStopCapture()
     // ++_captureCount;
 }
 
-        
+
 std::ostream & Measurement::showCapture( std::ostream & os, const std::string & title, const uint64_t * values ) const
 {
     os << "\n" << title << "\n-------------\n";
@@ -452,6 +453,50 @@ void Measurement::printCaptures() const
         for( unsigned j = 0 ; j < _eventCount; ++j )
         {
             printf( "%16ld", values[j] );
+        }
+        printf( "\n" );
+    }
+}
+
+void Measurement::printMarkdownCaptures( double cpuFreqGHz ) const
+{
+    printf( "|event|nanos|" );
+    for( unsigned i = 0 ; i < _eventCount; ++i )
+    {
+        printf( "%s|", EventNames[ (int)_events[i] ].c_str() );
+    }
+    printf( "\n" );
+
+    printf( "|-----|----:|" );
+    for( unsigned i = 0 ; i < _eventCount; ++i )
+    {
+        printf( "----:|" );
+    }
+    printf( "\n" );
+
+    auto it = std::find( _events.begin(), _events.end(), (unsigned)EventType::cpuCycles );
+    auto idx = it == _events.end() ? _events.size() + 100 : it - _events.begin();
+
+    for( unsigned i = 0; i <= _captureCount; ++i )
+    {
+        const uint64_t * values;
+        if( i < _captureCount )
+        {
+            printf( "|%d|", i+1 );
+            values = capture(i,in);
+        }
+        else
+        {
+            printf( "|avg|" );
+            values = _avgValues;
+        }
+        if( idx < _events.size() )
+        {
+            printf( "%.1f|", (double)values[idx]/cpuFreqGHz );
+        }
+        for( unsigned j = 0 ; j < _eventCount; ++j )
+        {
+            printf( "%ld|", values[j] );
         }
         printf( "\n" );
     }

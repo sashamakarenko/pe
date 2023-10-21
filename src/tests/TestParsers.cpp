@@ -98,7 +98,7 @@ int main( int argc, char** argv )
     // m.addEvent( pe::EventType::memory );
     const unsigned N = 16;
     m.initialize( N*10 );
-    
+
     std::cout << "\nsmall integers atoi:" << std::endl;
     for( int i = 0; i < m.getMaxCaptures(); ++i )
     {
@@ -149,6 +149,20 @@ int main( int argc, char** argv )
     {
         m.startCapture();
         intValue = parseUInt8( smallIntegers[i%N], len );
+        m.stopCapture();
+        //std::cout << intValue << std::endl;
+    }
+    m.prepareResults();
+    // m.printCaptures();
+    m.showAverageValues( std::cout );
+    m.rewind();
+
+    std::cout << "\nsmall integers parseUint:" << std::endl;
+    intValue = spinUpCpu();
+    for( int i = 0; i < m.getMaxCaptures(); ++i )
+    {
+        m.startCapture();
+        intValue = parseUInt( smallIntegers[i%N], len );
         m.stopCapture();
         //std::cout << intValue << std::endl;
     }
@@ -228,6 +242,20 @@ int main( int argc, char** argv )
     m.showAverageValues( std::cout );
     m.rewind();
 
+    std::cout << "\nhuge integers parseUint:" << std::endl;
+    intValue = spinUpCpu();
+    for( int i = 0; i < m.getMaxCaptures(); ++i )
+    {
+        m.startCapture();
+        intValue = parseUInt<uint64_t>( hugeIntegers[i%N], len );
+        m.stopCapture();
+        //std::cout << intValue << std::endl;
+    }
+    m.prepareResults();
+    // m.printCaptures();
+    m.showAverageValues( std::cout );
+    m.rewind();
+
     std::cout << "\nhuge integers parseUint4:" << std::endl;
     intValue = spinUpCpu();
     for( int i = 0; i < m.getMaxCaptures(); ++i )
@@ -299,7 +327,7 @@ int main( int argc, char** argv )
     // m.printCaptures();
     m.showAverageValues( std::cout );
     m.rewind();
-    
+
     std::cout << "\nlarge integers parseUint4:" << std::endl;
     intValue = spinUpCpu();
     for( int i = 0; i < m.getMaxCaptures(); ++i )

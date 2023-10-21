@@ -3,7 +3,7 @@ linux perf event c++ wrapper
 
 Measure how much your code costs in terms of hardware instructions, cachemisses, branchmisses and memory allocations.
 
-## 1. Compile pe ##
+## 1. Compile pe
 
 You will need sashamakarenko/makefile project cloned next to the pe working copy.
 
@@ -14,7 +14,7 @@ $> cd pe
 $> make
 ```
 
-## 2. Create code snippet ##
+## 2. Create code snippet
 Let us invoke gettimeofday 20 times on the CPU core 3 and get statistics from this.
 Instrument your code or create pe/src/tests/TestGettimeofday.cpp like this:
 
@@ -49,13 +49,13 @@ int main( int argc, char** argv )
 }
 ```
 
-##  3. Compile ##
+##  3. Compile
 
 ```
 $> make
 ```
 
-## 4. Run measurement ##
+## 4. Run measurement
 
 Enable perf events:
 ```
@@ -70,18 +70,6 @@ $> sudo cpufreq-set -c 3 -g performance
 Run the code
 ```
 $> make check
-gettimeofday:
-event:       cpu.cycles       hw.instrs       br.instrs    cch.ll.rmiss       br.misses      bus.cycles   cch.l1d.rmiss   cch.l1i.rmiss
-     1             1755              83              15               0               4               9              19              43
-     2              104              82              14               0               1               0               0               0
-     3               76              82              14               0               0               0               0               0
-     4               78              82              14               0               0               0               0               0
-     5               77              82              14               0               0               0               0               0
-     6               77              82              14               0               0               1               0               0
-     7               78              82              14               0               0               1               0               0
-     8               79              82              14               0               0               0               0               0
-   avg:              77              82              14               0               0               0               0               0
-
 ```
 
 Relax the CPU
@@ -89,11 +77,62 @@ Relax the CPU
 $> sudo cpufreq-set -g powersave
 ```
 
-## 5. Results ##
+## 5. Results
 
+The metrics correspond to **10 calls** in a row.
 Hopefully the column names are self-explanatory.
-One can convert CPU cycles to time (if frequency is stable) by deviding number of cycles by CPU frequency.
-In my case a gettimeofday casts in average 77/5GHz = 15 nanos.
+The column `nanos/call` correspond to a single call time on a 5GHz
+
+### Cost of time measurement functions
+
+|event|nanos/call|cpu.cycles|hw.instrs|br.instrs|cch.ll.rmiss|br.misses|bus.cycles|cch.l1d.rmiss|cch.l1i.rmiss|
+|-----|----:|----:|----:|----:|----:|----:|----:|----:|----:|
+|**gettimeofday**|13.2|661|821|140|0|0|3|2|0|
+|**clock_gettime**|14.3|714|911|170|0|3|3|3|0|
+|**rdtsc**|7.0|352|61|0|0|0|2|0|0|
+
+### Functions and method calls
+
+See `src/tests/TestLibCalls.cpp` for details. 
+In order to avoid compiler call evictions, for the functions returning int we actually measure:
+
+```cpp
+externVolatileInt += function();
+externVolatileInt += function();
+... // repeated 10 times
+externVolatileInt += function();
+```
+
+#### Without LTO
+
+|event|nanos/call|cpu.cycles|hw.instrs|br.instrs|cch.ll.rmiss|br.misses|bus.cycles|cch.l1d.rmiss|cch.l1i.rmiss|
+|-----|----:|----:|----:|----:|----:|----:|----:|----:|----:|
+|void()|1.4|70|20|20|0|0|0|0|0|
+|void(int)|0.7|36|30|20|0|0|0|0|0|
+|int(int)|0.9|43|81|20|0|0|0|0|0|
+|inline int base.get()|0.7|37|43|0|0|0|0|0|0|
+|int base.get()|0.9|45|83|20|0|0|0|0|0|
+|int base.*getIntPtr()|1.2|61|123|30|0|0|0|0|0|
+|virtual int base.get()|0.9|43|93|20|0|0|0|0|0|
+|virtual int derived.get()|0.9|43|93|20|0|0|0|0|0|
+|virtual int virtDerived.get()|1.3|67|133|20|0|0|0|0|0|
+|inline base.getIndirect()|1.0|52|46|0|0|0|0|0|0|
+|inline derived.getIndirect()|1.0|48|46|0|0|0|0|0|0|
+
+#### With LTO
+
+|event|nanos/call|cpu.cycles|hw.instrs|br.instrs|cch.ll.rmiss|br.misses|bus.cycles|cch.l1d.rmiss|cch.l1i.rmiss|
+|-----|----:|----:|----:|----:|----:|----:|----:|----:|----:|
+|void()|0.0|0|0|0|0|0|0|0|0|
+|void(int)|0.0|0|0|0|0|0|0|0|0|
+|int(int)|1.0|48|30|0|0|0|0|0|0|
+|inline int base.get()|0.9|47|40|0|0|0|0|0|0|
+|int base.get()|0.9|44|40|0|0|0|0|0|0|
+|int base.*getIntPtr()|1.3|64|120|30|0|0|0|0|0|
+|virtual int base.get()|1.0|48|71|20|0|0|0|0|0|
+|virtual int derived.get()|0.9|45|71|20|0|0|0|0|0|
+|virtual int virtDerived.get()|1.5|77|120|20|0|0|0|0|0|
+|inline base.getIndirect()|1.0|48|40|0|0|0|0|0|0|
+|inline derived.getIndirect()|0.9|43|40|0|0|0|0|0|0|
 
 [![HitCount](https://hits.dwyl.com/sashamakarenko/pe.svg?style=flat)](http://hits.dwyl.com/sashamakarenko/pe)
-

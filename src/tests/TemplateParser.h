@@ -1,14 +1,44 @@
 
-template<unsigned N>
-constexpr unsigned dec_zeros()
+template< typename T, T N >
+constexpr T dec_zeros()
 {
-    return ( dec_zeros<N-1>() * 10 ) + unsigned( '0' );
+    return ( dec_zeros<T,T(N-1)>() * T(10) ) + T( '0' );
 }
 
 template<>
-constexpr unsigned dec_zeros<0U>()
+constexpr unsigned short dec_zeros<unsigned short,0U>()
+{
+    return 0U;
+}
+
+template<>
+constexpr short dec_zeros<short,0>()
 {
     return 0;
+}
+
+template<>
+constexpr unsigned dec_zeros<unsigned,0U>()
+{
+    return 0U;
+}
+
+template<>
+constexpr int dec_zeros<int,0>()
+{
+    return 0;
+}
+
+template<>
+constexpr int64_t dec_zeros<int64_t,0L>()
+{
+    return 0L;
+}
+
+template<>
+constexpr uint64_t dec_zeros<uint64_t,0UL>()
+{
+    return 0UL;
 }
 
 // in FIX an int ends with SOH or .
@@ -124,64 +154,64 @@ inline T parseUInt8( const char * ptr, unsigned & len )
     if( isNotDecDigit( ptr[1] ) )
     {
         len += 1;
-        return T( ptr[0] ) - dec_zeros<1>();
+        return T( ptr[0] ) - dec_zeros<T,T(1)>();
     }
     if( isNotDecDigit( ptr[2] ) )
     {
         len += 2;
-        return T( ptr[0] ) * 10 + T( ptr[1] ) - dec_zeros<2>();
+        return T( ptr[0] ) * 10 + T( ptr[1] ) - dec_zeros<T,T(2)>();
     }
     if( isNotDecDigit( ptr[3] ) )
     {
         len += 3;
-        return T( ptr[0] ) * 100 + T( ptr[1] ) * 10 + T( ptr[2] ) - dec_zeros<3>();
+        return T( ptr[0] ) * 100 + T( ptr[1] ) * 10 + T( ptr[2] ) - dec_zeros<T,T(3)>();
     }
     if( isNotDecDigit( ptr[4] ) )
     {
         len += 4;
-        return T( ptr[0] ) * 1000 + 
-               T( ptr[1] ) * 100 + 
-               T( ptr[2] ) * 10 + 
-               T( ptr[3] ) - dec_zeros<4>();
+        return T( ptr[0] ) * 1000 +
+               T( ptr[1] ) * 100 +
+               T( ptr[2] ) * 10 +
+               T( ptr[3] ) - dec_zeros<T,(4)>();
     }
     if( isNotDecDigit( ptr[5] ) )
     {
         len += 5;
-        return T( ptr[0] ) * 10000 + 
-               T( ptr[1] ) * 1000 + 
-               T( ptr[2] ) * 100 + 
-               T( ptr[3] ) * 10 + 
-               T( ptr[4] ) - dec_zeros<5>();
+        return T( ptr[0] ) * 10000 +
+               T( ptr[1] ) * 1000 +
+               T( ptr[2] ) * 100 +
+               T( ptr[3] ) * 10 +
+               T( ptr[4] ) - dec_zeros<T,T(5)>();
     }
     if( isNotDecDigit( ptr[6] ) )
     {
         len += 6;
-        return T( ptr[0] ) * 100000 + 
-               T( ptr[1] ) * 10000 + 
-               T( ptr[2] ) * 1000 + 
-               T( ptr[3] ) * 100 + 
-               T( ptr[4] ) * 10 + 
-               T( ptr[5] ) - dec_zeros<6>();
+        return T( ptr[0] ) * 100000 +
+               T( ptr[1] ) * 10000 +
+               T( ptr[2] ) * 1000 +
+               T( ptr[3] ) * 100 +
+               T( ptr[4] ) * 10 +
+               T( ptr[5] ) - dec_zeros<T,T(6)>();
     }
     if( isNotDecDigit( ptr[7] ) )
     {
         len += 7;
-        return T( ptr[0] ) * 1000000 + 
-               T( ptr[1] ) * 100000 + 
-               T( ptr[2] ) * 10000 + 
-               T( ptr[3] ) * 1000 + 
-               T( ptr[4] ) * 100 + 
+        return T( ptr[0] ) * 1000000 +
+               T( ptr[1] ) * 100000 +
+               T( ptr[2] ) * 10000 +
+               T( ptr[3] ) * 1000 +
+               T( ptr[4] ) * 100 +
                T( ptr[5] ) * 10 +
-               T( ptr[6] ) - dec_zeros<7>();
+               T( ptr[6] ) - dec_zeros<T,T(7)>();
     }
-    T tmp =    T( ptr[0] ) * 10000000 + 
-               T( ptr[1] ) * 1000000 + 
-               T( ptr[2] ) * 100000 + 
-               T( ptr[3] ) * 10000 + 
-               T( ptr[4] ) * 1000 + 
+    T tmp =    T( ptr[0] ) * 10000000 +
+               T( ptr[1] ) * 1000000 +
+               T( ptr[2] ) * 100000 +
+               T( ptr[3] ) * 10000 +
+               T( ptr[4] ) * 1000 +
                T( ptr[5] ) * 100 +
                T( ptr[6] ) * 10 +
-               T( ptr[7] ) - dec_zeros<8>();
+               T( ptr[7] ) - dec_zeros<T,T(8)>();
     if( isNotDecDigit( ptr[8] ) )
     {
         len += 8;
@@ -190,6 +220,92 @@ inline T parseUInt8( const char * ptr, unsigned & len )
 
     unsigned tmplen = 0;
     T next = parseUInt8<T>( ptr + 8, tmplen );
+    len += tmplen + 8;
+    return tmp * (T)uintPow10[ tmplen ] + next;
+}
+
+
+template< typename T = unsigned >
+inline T parseUInt( const char * ptr, unsigned & len )
+{
+    if( isNotDecDigit( ptr[0] ) )
+    {
+        return 0;
+    }
+    if( isNotDecDigit( ptr[1] ) )
+    {
+        len += 1;
+        return T( ptr[0] ) - dec_zeros<T,T(1)>();
+    }
+    if( isNotDecDigit( ptr[2] ) )
+    {
+        len += 2;
+        return T( ptr[0] ) * 10 + T( ptr[1] ) - dec_zeros<T,T(2)>();
+    }
+    if( isNotDecDigit( ptr[3] ) )
+    {
+        len += 3;
+        return ( T( ptr[0] ) * 10 + T( ptr[1] ) ) * 10 + T( ptr[2] ) - dec_zeros<T,T(3)>();
+    }
+    if( isNotDecDigit( ptr[4] ) )
+    {
+        len += 4;
+        return ( (
+               T( ptr[0] )   * 10 +
+               T( ptr[1] ) ) * 10 +
+               T( ptr[2] ) ) * 10 +
+               T( ptr[3] ) - dec_zeros<T,T(4)>();
+    }
+    if( isNotDecDigit( ptr[5] ) )
+    {
+        len += 5;
+        return ( ( (
+               T( ptr[0] )   * 10 +
+               T( ptr[1] ) ) * 10 +
+               T( ptr[2] ) ) * 10 +
+               T( ptr[3] ) ) * 10 +
+               T( ptr[4] ) - dec_zeros<T,T(5)>();
+    }
+    if( isNotDecDigit( ptr[6] ) )
+    {
+        len += 6;
+        return ( ( ( (
+               T( ptr[0] )   * 10 +
+               T( ptr[1] ) ) * 10 +
+               T( ptr[2] ) ) * 10 +
+               T( ptr[3] ) ) * 10 +
+               T( ptr[4] ) ) * 10 +
+               T( ptr[5] ) - dec_zeros<T,T(6)>();
+    }
+    if( isNotDecDigit( ptr[7] ) )
+    {
+        len += 7;
+        return ( ( ( ( (
+               T( ptr[0] )   * 10 +
+               T( ptr[1] ) ) * 10 +
+               T( ptr[2] ) ) * 10 +
+               T( ptr[3] ) ) * 10 +
+               T( ptr[4] ) ) * 10 +
+               T( ptr[5] ) ) * 10 +
+               T( ptr[6] ) - dec_zeros<T,T(7)>();
+    }
+    T tmp =    ( ( ( ( ( (
+               T( ptr[0] )   * 10 +
+               T( ptr[1] ) ) * 10 +
+               T( ptr[2] ) ) * 10 +
+               T( ptr[3] ) ) * 10 +
+               T( ptr[4] ) ) * 10 +
+               T( ptr[5] ) ) * 10 +
+               T( ptr[6] ) ) * 10 +
+               T( ptr[7] ) - dec_zeros<T,T(8)>();
+    if( isNotDecDigit( ptr[8] ) )
+    {
+        len += 8;
+        return tmp;
+    }
+
+    unsigned tmplen = 0;
+    T next = parseUInt<T>( ptr + 8, tmplen );
     len += tmplen + 8;
     return tmp * (T)uintPow10[ tmplen ] + next;
 }
@@ -206,24 +322,24 @@ inline T parseUInt4( const char * ptr, unsigned & len )
     if( isNotDecDigit( ( mem >> 8 ) & 0xff ) )
     {
         len += 1;
-        return T( mem & 0xff ) - dec_zeros<1>();
+        return T( mem & 0xff ) - dec_zeros<T,T(1)>();
     }
     if( isNotDecDigit( ( mem >> 16 ) & 0xff  ) )
     {
         len += 2;
-        return T( mem & 0xff ) * 10 + T( (mem>>8) & 0xff ) - dec_zeros<2>();
+        return T( mem & 0xff ) * 10 + T( (mem>>8) & 0xff ) - dec_zeros<T,T(2)>();
     }
     if( isNotDecDigit( ( mem >> 24 ) & 0xff  ) )
     {
         len += 3;
-        return T(  mem      & 0xff ) * 100 + 
-               T( (mem>>8 ) & 0xff ) * 10 + 
-               T( (mem>>16) & 0xff ) - dec_zeros<3>();
+        return T(  mem      & 0xff ) * 100 +
+               T( (mem>>8 ) & 0xff ) * 10 +
+               T( (mem>>16) & 0xff ) - dec_zeros<T,T(3)>();
     }
-    T tmp =    T( ptr[0] ) * 1000 + 
+    T tmp =    T( ptr[0] ) * 1000 +
                T( ptr[1] ) * 100 +
                T( ptr[2] ) * 10 +
-               T( ptr[3] ) - dec_zeros<4>();
+               T( ptr[3] ) - dec_zeros<T,(4)>();
     if( isNotDecDigit( ptr[4] ) )
     {
         len += 4;
