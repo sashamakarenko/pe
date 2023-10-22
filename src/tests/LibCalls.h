@@ -34,5 +34,13 @@ struct VDerived: virtual Base
     virtual int getIntVirtual() const volatile override;
 };
 
+
+struct Extensible
+{
+    static Extensible * newInstance();
+    virtual ~Extensible();
+    int getInt() const;
+};
+
 #endif /* LIBCALLS_H */
 

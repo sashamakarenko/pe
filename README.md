@@ -91,7 +91,7 @@ The column `nanos/call` correspond to a single call time on a 5GHz
 |**clock_gettime**|14.3|714|911|170|0|3|3|3|0|
 |**rdtsc**|7.0|352|61|0|0|0|2|0|0|
 
-### Functions and method calls
+### Functions and methods
 
 See `src/tests/TestLibCalls.cpp` for details. 
 In order to avoid compiler call evictions, for the functions returning int we actually measure:

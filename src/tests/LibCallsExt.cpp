@@ -61,3 +61,21 @@ int VDerived::getIntVirtual() const volatile { return i; };
 
 int VDerivedComplex::getIntVirtual() const volatile { return i; };
 
+struct ExtensibleImpl: Extensible
+{
+    int k = 1;
+    int i = 2;
+};
+
+Extensible * Extensible::newInstance()
+{
+    return new ExtensibleImpl();
+}
+
+Extensible::~Extensible(){}
+
+int Extensible::getInt() const
+{
+    return static_cast<const ExtensibleImpl*>(this)->i;
+}
+

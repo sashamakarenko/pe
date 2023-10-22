@@ -41,10 +41,10 @@ static __inline__ uint64_t rdtsc() {
         m.stopCapture();\
     }\
     m.prepareResults();\
-    m.printCaptures();\
     m.printMarkdownCaptures( 50 );\
     m.rewind();
 
+    //m.printCaptures();\
 
 int main( int argc, char** argv )
 {
@@ -91,6 +91,9 @@ int main( int argc, char** argv )
 
     RUN_TEST( vint += derived.getIntInlinedIndirect() )
 
+    Extensible * ex = Extensible::newInstance();
+
+    RUN_TEST( vint += ex->getInt() )
 
     return 0;
 }
