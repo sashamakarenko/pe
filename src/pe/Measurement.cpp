@@ -11,6 +11,23 @@
 #include <atomic>
 #include <malloc.h>
 
+// will be 1 if LD_PRELOAD=libPePreload.so
+int pePreloaded = 0;
+
+pthread_key_t mallocCountKey;
+pthread_key_t mallocSizeKey;
+pthread_key_t freeCountKey;
+
+void initPe()
+{
+    if( pePreloaded == 0 )
+    {
+        pthread_key_create( &mallocCountKey, 0 );
+        pthread_key_create( &mallocSizeKey , 0 );
+        pthread_key_create( &freeCountKey  , 0 );    
+    }
+}
+
 namespace pe
 {
 
@@ -75,11 +92,6 @@ const uint64_t EventNativeConfig[] =
     PERF_COUNT_HW_STALLED_CYCLES_FRONTEND,
     PERF_COUNT_HW_STALLED_CYCLES_BACKEND
 };
-
-thread_local uint64_t mallocCount = 0;
-thread_local uint64_t mallocSize  = 0;
-thread_local uint64_t freeCount   = 0;
-
 
 /*
 
@@ -182,6 +194,13 @@ bool Measurement::addEvent( EventType evType )
     if( evType == EventType::memory )
     {
         _captureMemory = true;
+        if( pePreloaded == 0 )
+        {
+            std::cerr << "Memory capture disbaled. Consider using LD_PRELOAD=libPePreload-1.0.so" << std::endl;
+            pthread_setspecific( mallocCountKey, 0 );
+            pthread_setspecific( mallocSizeKey , 0 );
+            pthread_setspecific( freeCountKey  , 0 );
+        }
         return true;
     }
 
@@ -212,28 +231,6 @@ bool Measurement::addEvent( EventType evType )
     return true;
 }
 
-std::atomic<bool> memoryHooksActivated = false;
-void *(*old_malloc_hook)(size_t, const void *) = nullptr;
-void (*old_free_hook)(void *, const void *) = nullptr;
-
-void * myMallocHook( size_t size, const void *caller )
-{
-    ++mallocCount;
-    mallocSize += size;
-    __malloc_hook = old_malloc_hook;
-    void *result = malloc( size );
-    __malloc_hook = myMallocHook;
-    return result;
-}
-
-void myFreeHook( void *ptr, const void *caller )
-{
-    ++freeCount;
-    __free_hook = old_free_hook;
-    free( ptr );
-    __free_hook = myFreeHook;
-}
-
 bool Measurement::initialize( unsigned maxCaptures )
 {
     if( maxCaptures < 1 )
@@ -256,15 +253,6 @@ bool Measurement::initialize( unsigned maxCaptures )
         _events.push_back( (unsigned)EventType::count   );
         _events.push_back( (unsigned)EventType::count+1 );
         _events.push_back( (unsigned)EventType::count+2 );
-
-        bool notTrue = false;
-        if( std::atomic_compare_exchange_strong( &memoryHooksActivated, &notTrue, true ) )
-        {
-            old_malloc_hook = __malloc_hook;
-            old_free_hook = __free_hook;
-            __malloc_hook = myMallocHook;
-            __free_hook = myFreeHook;
-        }
     }
 
     _eventCount = _events.size();
@@ -346,9 +334,9 @@ void Measurement::startCapture()
     if( _captureMemory )
     {
         ptr += _eventCount - 3;
-        ptr[0] = mallocCount;
-        ptr[1] = mallocSize;
-        ptr[2] = freeCount;
+        ptr[0] = (uint64_t)pthread_getspecific( mallocCountKey );
+        ptr[1] = (uint64_t)pthread_getspecific( mallocSizeKey );
+        ptr[2] = (uint64_t)pthread_getspecific( freeCountKey );
     }
 }
 
@@ -366,9 +354,9 @@ void Measurement::stopCapture()
     if( _captureMemory )
     {
         ptr += _eventCount - 3;
-        ptr[0] = mallocCount;
-        ptr[1] = mallocSize;
-        ptr[2] = freeCount;
+        ptr[0] = (uint64_t)pthread_getspecific( mallocCountKey );
+        ptr[1] = (uint64_t)pthread_getspecific( mallocSizeKey );
+        ptr[2] = (uint64_t)pthread_getspecific( freeCountKey );
     }
     ++_captureCount;
 }
@@ -388,9 +376,9 @@ void Measurement::fakeStopCapture()
     if( _captureMemory )
     {
         ptr += _eventCount - 3;
-        ptr[0] = mallocCount;
-        ptr[1] = mallocSize;
-        ptr[2] = freeCount;
+        ptr[0] = (uint64_t)pthread_getspecific( mallocCountKey );
+        ptr[1] = (uint64_t)pthread_getspecific( mallocSizeKey );
+        ptr[2] = (uint64_t)pthread_getspecific( freeCountKey );
     }
     // the diff with stopCapture()
     // ++_captureCount;

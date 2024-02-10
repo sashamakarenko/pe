@@ -30,7 +30,7 @@ int main( int argc, char** argv )
     m.addEvent( pe::EventType::branchInstructions );
     m.addEvent( pe::EventType::llCacheReadMisses );
     m.addEvent( pe::EventType::branchMisses );
-    m.addEvent( pe::EventType::memory );
+    m.addEvent( pe::EventType::memory ); // you will have to use LD_PRELOAD=build/lib/release/libPePreload-1.0.so to capture memory usage
     m.initialize( 20 );
     
     std::cout << "\ngettimeofday:" << std::endl;
