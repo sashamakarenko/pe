@@ -6,6 +6,7 @@ extern std::string result;
 extern unsigned smallIntegers[];
 extern unsigned largeIntegers[];
 extern uint64_t hugeIntegers[];
+extern char * ptr;
 
 int main( int argc, char** argv )
 {
@@ -58,8 +59,8 @@ int main( int argc, char** argv )
     for( int i = 0; i < m.getMaxCaptures(); ++i )
     {
         m.startCapture();
-        char * ptr = new char[100];
-        delete ptr;
+        ptr = new char[100];
+        delete [] ptr;
         m.stopCapture();
     }
     m.prepareResults();
