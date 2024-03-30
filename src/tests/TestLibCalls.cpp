@@ -25,7 +25,7 @@ static __inline__ uint64_t rdtsc() {
 
 
 #define RUN_TEST(T) std::cout << "\n ------ " #T " -----" << std::endl;\
-    for( int i = 0; i < m.getMaxCaptures(); ++i )\
+    for( unsigned i = 0; i < m.getMaxCaptures(); ++i )\
     {\
         m.startCapture();\
         T;\
@@ -44,7 +44,7 @@ static __inline__ uint64_t rdtsc() {
     m.printMarkdownCaptures( 50 );\
     m.rewind();
 
-    //m.printCaptures();\
+    //m.printCaptures();
 
 int main( int argc, char** argv )
 {

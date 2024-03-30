@@ -4,7 +4,7 @@ PRJ_VERSION := $(PRJ_BRANCH).0
 PRJ_TYPE    := lib
 
 TEST_EXTRA_LINK_LIBS = -lrt -lpthread
-CPP_EXTRA_FLAGS = -Wno-deprecated-declarations
+CPP_EXTRA_FLAGS = -Wall -Wextra -Wno-unused-parameter -Werror -fmax-errors=1 -Wno-deprecated-declarations
 
 LIB_PRELOAD = build/lib/$(BUILD_MODE)/libPePreload-$(PRJ_BRANCH).so
 TARGET_EXTRA_DEPENDENCY = $(LIB_PRELOAD)

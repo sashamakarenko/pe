@@ -1,6 +1,6 @@
 #include <pe/Measurement.h>
 #include <iostream>
-#include "Helper.h"
+#include <utests/TrivialHelper.h>
 
 extern std::string result;
 extern unsigned smallIntegers[];
@@ -20,7 +20,7 @@ int main( int argc, char** argv )
     m.initialize( N*10 );
 
     std::cout << "\nsmall integers std::to_string:" << std::endl;
-    for( int i = 0; i < m.getMaxCaptures(); ++i )
+    for( unsigned i = 0; i < m.getMaxCaptures(); ++i )
     {
         m.startCapture();
         result = std::to_string( smallIntegers[i%N] );
@@ -32,7 +32,7 @@ int main( int argc, char** argv )
     m.rewind();
 
     std::cout << "\nlarge integers std::to_string:" << std::endl;
-    for( int i = 0; i < m.getMaxCaptures(); ++i )
+    for( unsigned i = 0; i < m.getMaxCaptures(); ++i )
     {
         m.startCapture();
         result = std::to_string( largeIntegers[i%N] );
@@ -44,7 +44,7 @@ int main( int argc, char** argv )
     m.rewind();
 
     std::cout << "\nhuge integers std::to_string:" << std::endl;
-    for( int i = 0; i < m.getMaxCaptures(); ++i )
+    for( unsigned i = 0; i < m.getMaxCaptures(); ++i )
     {
         m.startCapture();
         result = std::to_string( hugeIntegers[i%N] );
@@ -56,7 +56,7 @@ int main( int argc, char** argv )
     m.rewind();
 
     std::cout << "\nnew delete 100:" << std::endl;
-    for( int i = 0; i < m.getMaxCaptures(); ++i )
+    for( unsigned i = 0; i < m.getMaxCaptures(); ++i )
     {
         m.startCapture();
         ptr = new char[100];

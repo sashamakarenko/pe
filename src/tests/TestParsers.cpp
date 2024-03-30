@@ -1,7 +1,7 @@
 #include <pe/Measurement.h>
 #include <iostream>
 #include "TemplateParser.h"
-#include "Helper.h"
+#include <utests/TrivialHelper.h>
 
 extern int intValue;
 extern double doubleValue;
@@ -13,7 +13,7 @@ extern int spinUpCpu();
 int main( int argc, char** argv )
 {
     unsigned l = 0;
-    long v = parseUInt4<long>( "0123456789" "1234567", l );
+    [[maybe_unused]]long v = parseUInt4<long>( "0123456789" "1234567", l );
 
     for( const char **ptr = smallIntegers; *ptr; ++ptr )
     {
@@ -100,7 +100,7 @@ int main( int argc, char** argv )
     m.initialize( N*10 );
 
     std::cout << "\nsmall integers atoi:" << std::endl;
-    for( int i = 0; i < m.getMaxCaptures(); ++i )
+    for( unsigned i = 0; i < m.getMaxCaptures(); ++i )
     {
         m.startCapture();
         intValue = atoi( smallIntegers[i%N] );
@@ -115,7 +115,7 @@ int main( int argc, char** argv )
 
     std::cout << "\nlarge integers atoi:" << std::endl;
     intValue = spinUpCpu();
-    for( int i = 0; i < m.getMaxCaptures(); ++i )
+    for( unsigned i = 0; i < m.getMaxCaptures(); ++i )
     {
         m.startCapture();
         intValue = atoi( largeIntegers[i%N] );
@@ -131,7 +131,7 @@ int main( int argc, char** argv )
 
     std::cout << "\nsmall integers naiveParseUint1:" << std::endl;
     intValue = spinUpCpu();
-    for( int i = 0; i < m.getMaxCaptures(); ++i )
+    for( unsigned i = 0; i < m.getMaxCaptures(); ++i )
     {
         m.startCapture();
         intValue = naiveParseUInt1( smallIntegers[i%N], len );
@@ -145,7 +145,7 @@ int main( int argc, char** argv )
 
     std::cout << "\nsmall integers parseUint8:" << std::endl;
     intValue = spinUpCpu();
-    for( int i = 0; i < m.getMaxCaptures(); ++i )
+    for( unsigned i = 0; i < m.getMaxCaptures(); ++i )
     {
         m.startCapture();
         intValue = parseUInt8( smallIntegers[i%N], len );
@@ -159,7 +159,7 @@ int main( int argc, char** argv )
 
     std::cout << "\nsmall integers parseUint:" << std::endl;
     intValue = spinUpCpu();
-    for( int i = 0; i < m.getMaxCaptures(); ++i )
+    for( unsigned i = 0; i < m.getMaxCaptures(); ++i )
     {
         m.startCapture();
         intValue = parseUInt( smallIntegers[i%N], len );
@@ -173,7 +173,7 @@ int main( int argc, char** argv )
 
     std::cout << "\nsmall integers parseUint2:" << std::endl;
     intValue = spinUpCpu();
-    for( int i = 0; i < m.getMaxCaptures(); ++i )
+    for( unsigned i = 0; i < m.getMaxCaptures(); ++i )
     {
         m.startCapture();
         intValue = parseUInt2( smallIntegers[i%N], len );
@@ -187,7 +187,7 @@ int main( int argc, char** argv )
 
     std::cout << "\nsmall integers parseUint4:" << std::endl;
     intValue = spinUpCpu();
-    for( int i = 0; i < m.getMaxCaptures(); ++i )
+    for( unsigned i = 0; i < m.getMaxCaptures(); ++i )
     {
         m.startCapture();
         intValue = parseUInt4( smallIntegers[i%N], len );
@@ -202,7 +202,7 @@ int main( int argc, char** argv )
 
     std::cout << "\nhuge integers naiveParseUint1:" << std::endl;
     intValue = spinUpCpu();
-    for( int i = 0; i < m.getMaxCaptures(); ++i )
+    for( unsigned i = 0; i < m.getMaxCaptures(); ++i )
     {
         m.startCapture();
         intValue = naiveParseUInt1<uint64_t>( hugeIntegers[i%N], len );
@@ -216,7 +216,7 @@ int main( int argc, char** argv )
 
     std::cout << "\nhuge integers naiveParseUint2:" << std::endl;
     intValue = spinUpCpu();
-    for( int i = 0; i < m.getMaxCaptures(); ++i )
+    for( unsigned i = 0; i < m.getMaxCaptures(); ++i )
     {
         m.startCapture();
         intValue = naiveParseUInt2<uint64_t>( hugeIntegers[i%N], len );
@@ -230,7 +230,7 @@ int main( int argc, char** argv )
 
     std::cout << "\nhuge integers parseUint8:" << std::endl;
     intValue = spinUpCpu();
-    for( int i = 0; i < m.getMaxCaptures(); ++i )
+    for( unsigned i = 0; i < m.getMaxCaptures(); ++i )
     {
         m.startCapture();
         intValue = parseUInt8<uint64_t>( hugeIntegers[i%N], len );
@@ -244,7 +244,7 @@ int main( int argc, char** argv )
 
     std::cout << "\nhuge integers parseUint:" << std::endl;
     intValue = spinUpCpu();
-    for( int i = 0; i < m.getMaxCaptures(); ++i )
+    for( unsigned i = 0; i < m.getMaxCaptures(); ++i )
     {
         m.startCapture();
         intValue = parseUInt<uint64_t>( hugeIntegers[i%N], len );
@@ -258,7 +258,7 @@ int main( int argc, char** argv )
 
     std::cout << "\nhuge integers parseUint4:" << std::endl;
     intValue = spinUpCpu();
-    for( int i = 0; i < m.getMaxCaptures(); ++i )
+    for( unsigned i = 0; i < m.getMaxCaptures(); ++i )
     {
         m.startCapture();
         intValue = parseUInt4<uint64_t>( hugeIntegers[i%N], len );
@@ -273,7 +273,7 @@ int main( int argc, char** argv )
 
     std::cout << "\nlarge integers naiveParseUint1:" << std::endl;
     intValue = spinUpCpu();
-    for( int i = 0; i < m.getMaxCaptures(); ++i )
+    for( unsigned i = 0; i < m.getMaxCaptures(); ++i )
     {
         m.startCapture();
         intValue = naiveParseUInt1( largeIntegers[i%N], len );
@@ -287,7 +287,7 @@ int main( int argc, char** argv )
 
     std::cout << "\nlarge integers naiveParseUint2:" << std::endl;
     intValue = spinUpCpu();
-    for( int i = 0; i < m.getMaxCaptures(); ++i )
+    for( unsigned i = 0; i < m.getMaxCaptures(); ++i )
     {
         m.startCapture();
         intValue = naiveParseUInt2( largeIntegers[i%N], len );
@@ -301,7 +301,7 @@ int main( int argc, char** argv )
 
     std::cout << "\nlarge integers parseUint8:" << std::endl;
     intValue = spinUpCpu();
-    for( int i = 0; i < m.getMaxCaptures(); ++i )
+    for( unsigned i = 0; i < m.getMaxCaptures(); ++i )
     {
         m.startCapture();
         intValue = parseUInt8( largeIntegers[i%N], len );
@@ -316,7 +316,7 @@ int main( int argc, char** argv )
 
     std::cout << "\nlarge integers parseUint2:" << std::endl;
     intValue = spinUpCpu();
-    for( int i = 0; i < m.getMaxCaptures(); ++i )
+    for( unsigned i = 0; i < m.getMaxCaptures(); ++i )
     {
         m.startCapture();
         intValue = parseUInt2( largeIntegers[i%N], len );
@@ -330,7 +330,7 @@ int main( int argc, char** argv )
 
     std::cout << "\nlarge integers parseUint4:" << std::endl;
     intValue = spinUpCpu();
-    for( int i = 0; i < m.getMaxCaptures(); ++i )
+    for( unsigned i = 0; i < m.getMaxCaptures(); ++i )
     {
         m.startCapture();
         intValue = parseUInt4( largeIntegers[i%N], len );
