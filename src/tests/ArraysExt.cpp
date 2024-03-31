@@ -1,17 +1,33 @@
-
 #include <vector>
 #include <array>
 #include <algorithm>
 #include <stdexcept>
+#include <mutex>
+#include "ArraysExt.h"
 
-void userHook();
+SpinLock usersLock;
+
+void Object::Recycler::operator()( Object * ptr )
+{
+    if( -- ptr->_users == 0 )
+    {
+        userHook();
+    }
+}
+
+Object::User Object::addUser()
+{
+    ++_users;
+    return User( this );
+}
 
 std::vector<const void*> vec;
 
-void vectorInsertUser( const void * user )
+void vectorAddUser( const void * user )
 {
     if( user )
     {
+        std::scoped_lock<SpinLock> protectUsers( usersLock );
         auto it = std::find( vec.begin(), vec.end(), user );
         if( it == vec.end() )
         {
@@ -24,6 +40,7 @@ void vectorRemoveUser( const void * user )
 {
     if( user )
     {
+        std::scoped_lock<SpinLock> protectUsers( usersLock );
         auto it = std::find( vec.begin(), vec.end(), user );
         if( it != vec.end() )
         {
@@ -41,12 +58,13 @@ constexpr unsigned arrSz = 8;
 const void * arr[arrSz]{};
 int userCount = 0;
 
-void arrayInsertUser( const void * user )
+void arrayAddUser( const void * user )
 {
     if( user == nullptr )
     {
         return;
     }
+    std::scoped_lock<SpinLock> protectUsers( usersLock );
     switch( userCount )
     {
         case 7:
@@ -71,7 +89,7 @@ void arrayInsertUser( const void * user )
             if( arr[0] == user ) return;
             [[fallthrough]];
         case 0:
-            arr[ ++userCount ] = user;
+            arr[ userCount++ ] = user;
             break;
         default:
             throw std::out_of_range("too much");
@@ -81,6 +99,7 @@ void arrayInsertUser( const void * user )
 
 void arrayRemoveUser( const void * user )
 {
+    std::scoped_lock<SpinLock> protectUsers( usersLock );
     int pos = -1;
     switch( userCount )
     {
@@ -150,11 +169,14 @@ void arrayRemoveUser( const void * user )
         {
             arr[i] = arr[i+1];
         }
-        userHook();
+        if( userCount == 0 )
+        {
+            userHook();
+        }
     }
 }
 
-void arrayInsertUserX( const void * user )
+void arrayAddUserX( const void * user )
 {
     if( user == nullptr )
     {
@@ -193,7 +215,7 @@ void arrayRemoveUserX( const void * user )
     }
 }
 
-void arrayInsertUserY( const void * user )
+void arrayAddUserY( const void * user )
 {
     if( user == nullptr )
     {
