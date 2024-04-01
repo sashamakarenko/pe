@@ -5,20 +5,56 @@
 #include <mutex>
 #include "ArraysExt.h"
 
+int spinUpCpu(int i)
+{
+    return ( i << 12 ) / ( i == 0 ? 1 : 2 );
+}
+
 SpinLock usersLock;
 
-void Object::Recycler::operator()( Object * ptr )
+void Object::addUser( Object::User & user )
 {
-    if( -- ptr->_users == 0 )
+    if( user.ptr and user.ptr.get() != this )
     {
-        userHook();
+        user.ptr->removeUser( user );
+    }
+    if( not user.ptr )
+    {
+        ++_users;
+        user.ptr = shared_from_this();
     }
 }
 
-Object::User Object::addUser()
+void Object::removeUser( Object::User & user )
 {
-    ++_users;
-    return User( this );
+    if( user.ptr.get() == this )
+    {
+        user.ptr.reset();
+        if( --_users == 0 )
+        {
+            userHook();
+        }
+    }
+}
+
+void Object::addUser( unsigned idx )
+{
+    _users.fetch_or( 1 << idx );
+
+}
+
+void Object::removeUser( unsigned idx )
+{
+    int32_t oldValue = _users.load();
+    int32_t newValue = oldValue & ~( 1 << idx );
+    while( not _users.compare_exchange_weak( oldValue, newValue ) )
+    {
+        newValue = oldValue & ~( 1 << idx );
+    }
+    if( newValue == 0 )
+    {
+        userHook();
+    }
 }
 
 std::vector<const void*> vec;

@@ -35,17 +35,24 @@ void vectorAddUser( const void * user );
 void vectorRemoveUser( const void * user );
 void arrayAddUser( const void * user );
 void arrayRemoveUser( const void * user );
+int spinUpCpu(int);
 
-struct Object
+struct Object: std::enable_shared_from_this<Object>
 {
-    struct Recycler
+    using Ptr = std::shared_ptr<Object>;
+
+    struct User
     {
-        void operator()( Object * ptr );
+        Ptr ptr;
     };
 
-    using User = std::unique_ptr<Object,Recycler>;
-    
-    User addUser();
+    void addUser( User & user );
 
-    std::atomic_uint32_t _users = 0;
+    void removeUser( User & user );
+
+    std::atomic_int32_t _users = 0;
+
+    void addUser( unsigned idx );
+
+    void removeUser( unsigned idx );
 };
