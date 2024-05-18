@@ -2,6 +2,7 @@
 #include <iostream>
 #include <sys/time.h>
 #include <time.h>
+#include <string_view>
 
 #include "LibCalls.h"
 
@@ -16,6 +17,12 @@ extern volatile uint64_t vint64;
 extern Base & base;
 extern Base & derived;
 extern Base & vderived;
+
+extern std::string_view svin;
+extern char callStringViewByValue( std::string_view sv );
+extern char callStringViewByRef( const std::string_view & sv );
+extern char callStringViewByValue( std::string_view sv, int count );
+extern char callStringViewByRef( const std::string_view & sv, int count );
 
 static __inline__ uint64_t rdtsc() {
     uint32_t lo, hi;
@@ -94,6 +101,14 @@ int main( int argc, char** argv )
     Extensible * ex = Extensible::newInstance();
 
     RUN_TEST( vint += ex->getInt() )
+
+    RUN_TEST( vint += callStringViewByValue( svin ) )
+
+    RUN_TEST( vint += callStringViewByRef( svin ) )
+
+    RUN_TEST( vint += callStringViewByValue( svin, 10 ) )
+
+    RUN_TEST( vint += callStringViewByRef( svin, 10 ) )
 
     return 0;
 }
